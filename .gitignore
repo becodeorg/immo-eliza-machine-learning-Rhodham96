@@ -1,0 +1,39 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+
+# VSCode settings
+.vscode/
+
+# Données CSV
+data/*.csv
+
+# Fichiers générés automatiquement
+*.log
+*.pkl
+*.h5
+*.joblib
+
+# CatBoost log folder
+catboost_info/
+
+# Fichiers de test ou temporaires
+test.ipynb
+*.tmp
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Ignorer le dossier spécifique
+NeuralNetwork/training-instrumentation-toolkit/

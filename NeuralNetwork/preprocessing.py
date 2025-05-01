@@ -70,7 +70,7 @@ def getCoordinates(df):
     return df
 
 def getCoordinatesGiraffe(df):
-    df_giraffe = pd.read_csv('data/Giraffe.csv')
+    df_giraffe = pd.read_csv('../data/Giraffe.csv')
     df_giraffe = df_giraffe[['propertyId', 'latitude', 'longitude']]
 
     df_giraffe['id'] = df_giraffe['propertyId']
@@ -94,14 +94,13 @@ def transform_data_types(df, col_types):
     return df
 
 def cleaning(df):
-
     df = df.drop(columns=["Unnamed: 0", "url"])
 
     df = df.drop(columns=['monthlyCost', 'hasBalcony', 'accessibleDisabledPeople', 'roomCount', 'diningRoomSurface', 
                           'streetFacadeWidth', 'gardenOrientation', 'kitchenSurface', 'floorCount', 'hasDiningRoom', 
                           'hasDressingRoom'])
     
-    df = df.dropna()
+    
     binary_cols = [
         'hasBasement', 'hasLift', 'hasHeatPump', 'hasPhotovoltaicPanels', 
         'hasAirConditioning', 'hasArmoredDoor', 'hasVisiophone', 'hasOffice', 
@@ -302,7 +301,7 @@ def apply_kde_knn(df, df_train, scaler, knn):
 
 
 def preprocess():
-    df = pd.read_csv("./data/Kangaroo.csv")
+    df = pd.read_csv("../data/Kangaroo.csv")
     df = df.drop_duplicates(subset=["id"], keep="first")
     #df = df[(df['price']<2000000) & (df['price']>100000)]
     df = df[(df['price']<1000000)]
@@ -315,7 +314,7 @@ def preprocess():
     df = transform_data_types(df, {'price': float})
     return df
 
-def trainTestCleanDropNa():
+def trainTestClean():
 
     df = preprocess()
 
@@ -386,8 +385,8 @@ def main():
     df_train = reorganizeColumns(df_train)
     df_test = reorganizeColumns(df_test)
 
-    df_train.to_csv("./data/train.csv", index=False)
-    df_test.to_csv("./data/test.csv", index=False)
+    df_train.to_csv("../data/train.csv", index=False)
+    df_test.to_csv("../data/test.csv", index=False)
 
 
 if __name__ == "__main__":
