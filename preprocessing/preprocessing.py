@@ -70,7 +70,7 @@ def getCoordinates(df):
     return df
 
 def getCoordinatesGiraffe(df):
-    df_giraffe = pd.read_csv('../data/Giraffe.csv')
+    df_giraffe = pd.read_csv('data/Giraffe.csv')
     df_giraffe = df_giraffe[['propertyId', 'latitude', 'longitude']]
 
     df_giraffe['id'] = df_giraffe['propertyId']
@@ -301,10 +301,10 @@ def apply_kde_knn(df, df_train, scaler, knn):
 
 
 def preprocess():
-    df = pd.read_csv("../data/Kangaroo.csv")
+    df = pd.read_csv("./data/Kangaroo.csv")
     df = df.drop_duplicates(subset=["id"], keep="first")
     #df = df[(df['price']<2000000) & (df['price']>100000)]
-    df = df[(df['price']<1000000)]
+    df = df[(df['price']<1500000)]
     # drop lines without price
     df = df.dropna(subset=['price'])
     # epcScore
@@ -336,6 +336,8 @@ def trainTestClean():
     df_train = reorganizeColumns(df_train)
     df_test = reorganizeColumns(df_test)
 
+    df_train = standardize(df_train)
+    df_test = standardize(df_test)
     return df_train, df_test
 
 def reorganizeColumns(df):
@@ -357,8 +359,8 @@ def standardize(df):
 
     continuous_cols = [col for col in df.columns if col not in exclude_cols]
 
-    scaler = StandardScaler()
-    df_scaled[continuous_cols] = scaler.fit_transform(df[continuous_cols])
+    #scaler = StandardScaler()
+    #df_scaled[continuous_cols] = scaler.fit_transform(df[continuous_cols])
 
     return df_scaled
 
@@ -385,8 +387,8 @@ def main():
     df_train = reorganizeColumns(df_train)
     df_test = reorganizeColumns(df_test)
 
-    df_train.to_csv("../data/train.csv", index=False)
-    df_test.to_csv("../data/test.csv", index=False)
+    df_train.to_csv("./data/train.csv", index=False)
+    df_test.to_csv("./data/test.csv", index=False)
 
 
 if __name__ == "__main__":
