@@ -5,7 +5,6 @@ from scipy.stats import gaussian_kde
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 import pgeocode
-from datetime import datetime
 
 class DataCleaner(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -69,18 +68,23 @@ class DataCleaner(BaseEstimator, TransformerMixin):
         # Handle facade count
         df['facadeCount'] = df['facedeCount']
         df = df.drop(columns='facedeCount')
-        df['facadeCount'] = df['facadeCount'].fillna(-1)
+        df['facadeCount'] = df['facadeCount'].fillna(2)
         
         # Fill missing values
-        df['bedroomCount'] = df['bedroomCount'].fillna(-1).astype(float)
-        df['bathroomCount'] = df['bathroomCount'].fillna(-1).astype(float)
-        df['toiletCount'] = df['toiletCount'].fillna(-1).astype(float)
+        df['bedroomCount'] = df['bedroomCount'].fillna(1).astype(float)
+        df['bathroomCount'] = df['bathroomCount'].fillna(1).astype(float)
+        df['toiletCount'] = df['toiletCount'].fillna(1).astype(float)
         
-        # Drop habitable surface na
-        df = df.dropna(subset=['habitableSurface'])
+        # Fill habitable surface with median by subtype
+        mediane_by_subtype = df.groupby('subtype')['habitableSurface'].median()
+        df['habitableSurface'] = df.apply(
+            lambda row: mediane_by_subtype[row['subtype']] if pd.isna(row['habitableSurface']) else row['habitableSurface'],
+            axis=1
+        )
         
         # Fill other missing values
         df['buildingCondition'] = df['buildingCondition'].fillna('NOT_MENTIONED')
+        df['buildingConstructionYear'] = df['buildingConstructionYear'].fillna(df['buildingConstructionYear'].median()).astype(int)
         df['floodZoneType'] = df['floodZoneType'].fillna('NON_FLOOD_ZONE')
         df['heatingType'] = df['heatingType'].fillna(df['heatingType'].mode()[0])
         df['hasThermicPanels'] = df['hasThermicPanels'].fillna(0).astype(float)
@@ -88,18 +92,13 @@ class DataCleaner(BaseEstimator, TransformerMixin):
         df['landSurface'] = df['landSurface'].fillna(df['landSurface'].median())
         df['livingRoomSurface'] = df['livingRoomSurface'].fillna(df['livingRoomSurface'].median())
         
-        # Transform building construction year into age and fillna(-1)
-        current_year = datetime.now().year
-        df['buildingAge'] = current_year - df['buildingConstructionYear']
-        df['buildingAge'] = df['buildingAge'].fillna(-1)
-
         # Handle terrace surface and orientation
         median_terrace = df.loc[(df['hasTerrace'] == 1) & (df['terraceSurface'].notnull()), 'terraceSurface'].median()
-        df.loc[(df['hasTerrace'] == 1) & (df['terraceSurface'].isna()), 'terraceSurface'] = -1
+        df.loc[(df['hasTerrace'] == 1) & (df['terraceSurface'].isna()), 'terraceSurface'] = median_terrace
         df.loc[(df['hasTerrace'] != 1) & (df['terraceSurface'].isna()), 'terraceSurface'] = 0
         
         mode_terrace = df.loc[(df['hasTerrace'] == 1), 'terraceOrientation'].mode()[0]
-        df.loc[(df['hasTerrace'] == 1) & (df['terraceOrientation'].isna()), 'terraceOrientation'] = 'NOT_MENTIONED'
+        df.loc[(df['hasTerrace'] == 1) & (df['terraceOrientation'].isna()), 'terraceOrientation'] = mode_terrace
         df.loc[(df['hasTerrace'] != 1) & (df['terraceOrientation'].isna()), 'terraceOrientation'] = 'NO_TERRACE'
         
         # Convert data types
@@ -184,11 +183,15 @@ class FeatureEngineer(BaseEstimator, TransformerMixin):
         df['pricePerM2'] = df['pricePerM2'].replace([np.inf, -np.inf], np.nan)
         
         # Fill NaN values with median by region
-        df['pricePerM2'] = df['pricePerM2'].fillna(-1)
+        median_by_region = df.groupby('region')['pricePerM2'].median()
+        df['pricePerM2'] = df.apply(
+            lambda row: median_by_region[row['region']] if pd.isna(row['pricePerM2']) else row['pricePerM2'],
+            axis=1
+        )
         
         # Convert EPC score
         df['epcScore'] = df.apply(lambda row: self.epc_mapping.get(row['region'], {}).get(row['epcScore'], None), axis=1)
-        df['epcScore'] = df['epcScore'].fillna(-1)
+        df['epcScore'] = df['epcScore'].fillna(0)
         
         # Convert building condition
         condition_rating = {
@@ -312,7 +315,11 @@ class KDEKNNFeatureCreator(BaseEstimator, TransformerMixin):
         df['kde_price_per_m2_knn'] = kde_scores
         
         # Fill NaN values with median by region
-        df['kde_price_per_m2_knn'] = df['kde_price_per_m2_knn'].fillna(-1)
+        median_by_region = df.groupby('region')['kde_price_per_m2_knn'].median()
+        df['kde_price_per_m2_knn'] = df.apply(
+            lambda row: median_by_region[row['region']] if pd.isna(row['kde_price_per_m2_knn']) else row['kde_price_per_m2_knn'],
+            axis=1
+        )
         
         return df.drop(columns=['latitude', 'longitude'], errors='ignore')
 
@@ -320,7 +327,7 @@ class ColumnCleaner(BaseEstimator, TransformerMixin):
     def __init__(self):
         self.columns_to_drop = [
             'id', 'postCode', 'buildingConstructionYear', 'type', 'locality', 'region',
-            'latitude', 'longitude', 'buildingConstructionYear'
+            'latitude', 'longitude'
         ]
         
     def fit(self, X, y=None):

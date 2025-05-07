@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from .pipeline_components import (
+from .pipeline_components_1 import (
     DataCleaner, FeatureEngineer, CategoricalEncoder, 
     KDEKNNFeatureCreator, CoordinateGetter, ColumnCleaner
 )
